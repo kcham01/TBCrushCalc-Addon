@@ -2,7 +2,7 @@
 ## Title: |cffffd100TBCrushCalc|r
 ## Notes: Tank gear planner and crush / crit cap calculator for warriors, paladins and druids. Same as the TBCrushCalc app.
 ## Author: Jamesthefishguy
-## Version: 0.2.3
+## Version: 1.0.0-beta
 ## SavedVariables: TBCrushCalcDB
 ## IconTexture: Interface\Icons\INV_Shield_06
 ## Category: Combat

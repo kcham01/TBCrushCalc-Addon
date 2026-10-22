@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/kcham01/TBCrushCalc-Addon/raw/results/TBCrushCalc.zip"><img alt="Download the addon" src="https://img.shields.io/badge/Download-addon%20zip-1eff00?style=for-the-badge&logo=worldofwarcraft&logoColor=000&labelColor=0b1a14"></a>
+  <a href="https://github.com/kcham01/TBCrushCalc-Addon/releases"><img alt="Download the addon" src="https://img.shields.io/github/v/release/kcham01/TBCrushCalc-Addon?include_prereleases&style=for-the-badge&logo=worldofwarcraft&logoColor=000&label=Download&color=1eff00&labelColor=0b1a14"></a>
   <a href="#install"><img alt="How to install" src="https://img.shields.io/badge/How%20to-install-7fe0c4?style=for-the-badge&logo=bookstack&logoColor=000&labelColor=0b1a14"></a>
   <a href="https://github.com/kcham01/TBCrushCalc"><img alt="Get the phone app" src="https://img.shields.io/badge/Also%20on-Android-ffd100?style=for-the-badge&logo=android&logoColor=000&labelColor=0b1a14"></a>
   <br>
@@ -14,6 +14,8 @@
 </p>
 
 **TBCrushCalc**<sup><sub> (calc is short for calculator btw)</sub></sup> is a World of Warcraft addon for Burning Crusade tanks on the **TBC Anniversary** realms. Put gear on a character pane, spend talent points, pick your raid buffs and the boss, and it tells you whether that boss can still land crushing blows and crits on you, how hard it hits, and what would fix it. Type **/tbcc** in game.
+
+> **1.0.0 beta.** Everything the app does is in, and it's being tried out in game now. If something looks off or throws an error, please [say so](https://github.com/kcham01/TBCrushCalc-Addon/issues/new?title=Bug:%20&labels=bug), with a screenshot if you can.
 
 It is the [TBCrushCalc phone app](https://github.com/kcham01/TBCrushCalc), one for one, inside the game: the same screens, the same data (every TBC item, gem, enchant, consumable and raid boss) and the same maths, tested against the app on hundreds of characters. Protection warriors, protection paladins and feral druids.
 
@@ -37,12 +39,14 @@ It is the [TBCrushCalc phone app](https://github.com/kcham01/TBCrushCalc), one f
 
 ## Install
 
-1. Download [TBCrushCalc.zip](https://github.com/kcham01/TBCrushCalc-Addon/raw/results/TBCrushCalc.zip).
-2. Unzip it into `World of Warcraft\_anniversary_\Interface\AddOns`. You should end up with two folders there: `TBCrushCalc` and `TBCrushCalc_Data`.
-3. Start the game (or `/reload`) and make sure both are ticked in the AddOns list on the character screen.
+1. Download the zip from the [latest release](https://github.com/kcham01/TBCrushCalc-Addon/releases).
+2. Unzip it into `World of Warcraft\_anniversary_\Interface\AddOns`. You should end up with two folders there: `TBCrushCalc` and `TBCrushCalc_Data`. When updating, delete the old two first.
+3. Start the game (a first install needs a full restart; for updates `/reload` is enough) and make sure both are ticked in the AddOns list on the character screen.
 4. Type `/tbcc` or click the shield on the minimap.
 
 `/tbcc load` loads the character you're playing; `/tbcc minimap` hides or shows the minimap button. The item data (TBCrushCalc_Data) only loads the first time you open the window, so the addon costs next to nothing until you use it.
+
+The newest build, with every change since the last release and the same checks, is always [TBCrushCalc.zip on the results branch](https://github.com/kcham01/TBCrushCalc-Addon/raw/results/TBCrushCalc.zip). What changed in each release is in the [changelog](CHANGELOG.md).
 
 ## The maths, briefly
 

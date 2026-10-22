@@ -912,7 +912,7 @@ function M.env(player)
   G.ShowUIPanel = function(f) f:Show() end
   G.HideUIPanel = function(f) f:Hide() end
   G.CloseDropDownMenus = function() end
-  G.C_AddOns = { GetAddOnMetadata = function(_, k) return k == "Version" and "0.2.3" or nil end,
+  G.C_AddOns = { GetAddOnMetadata = function(_, k) return k == "Version" and "1.0.0-beta" or nil end,
     LoadAddOn = function(name)
       if M.loadAddOn then return M.loadAddOn(name) end
       return false, "MISSING"

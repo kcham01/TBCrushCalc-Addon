@@ -421,8 +421,28 @@ K.define("edit", function()
   e:SetHeight(22)
   e:SetFontObject("GameFontHighlight")
   e:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+  -- InputBoxTemplate highlights all the text whenever the box gains focus, so the next key replaces it.
+  -- Right when you click in; wrong when a redraw hands the focus back while you're typing (K.refocus)
+  e:SetScript("OnEditFocusGained", function(self)
+    if self.keepCursor then
+      self.keepCursor = nil
+      self:HighlightText(0, 0)
+      self:SetCursorPosition(#self:GetText())
+    else
+      self:HighlightText()
+    end
+  end)
   return e
-end, function(e) e:SetScript("OnTextChanged", nil) e:SetScript("OnEnterPressed", nil) e:SetText("") e:SetMaxLetters(0) e:ClearFocus() end)
+end, function(e) e:SetScript("OnTextChanged", nil) e:SetScript("OnEnterPressed", nil) e:SetText("") e:SetMaxLetters(0) e:ClearFocus() e.keepCursor = nil end)
+
+--- gives a text box the focus back without highlighting its text: the cursor goes to the end, as if you'd
+--- never stopped typing
+function K.refocus(e)
+  e.keepCursor = true
+  e:SetFocus()
+  e:HighlightText(0, 0)
+  e:SetCursorPosition(#e:GetText())
+end
 
 -- a horizontal slider
 K.define("slider", function()

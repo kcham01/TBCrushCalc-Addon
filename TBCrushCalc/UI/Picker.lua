@@ -128,7 +128,7 @@ function T.searchBox(f, state, placeholder, onChange)
   end)
   e:SetScript("OnEnterPressed", function(self) self:ClearFocus() state.focus = false end)
   e:SetScript("OnEscapePressed", function(self) self:ClearFocus() state.focus = false end)
-  if state.focus then e:SetFocus() e:SetCursorPosition(#(state.q or "")) end
+  if state.focus then K.refocus(e) end
   f:gap(6)
   return e
 end

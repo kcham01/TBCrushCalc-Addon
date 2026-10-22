@@ -165,6 +165,27 @@ run("slot panel and item picker", function()
   clickText("Change item")
   check("item picker lists items", visibleText("items for this slot"))
   shot("picker")
+  -- typing in the search box, a key at a time with the list redrawing in between, as in game
+  local function searchBox()
+    local found
+    local function walk(f) for _, c in ipairs(f._children) do if c._type == "EditBox" and c:IsVisible() then found = c end walk(c) end end
+    walk(T.topSheet())
+    return found
+  end
+  M.click(searchBox())
+  M.type("warbringer", function() M.tick(0.2) end)
+  check("search box keeps every key typed", searchBox():GetText() == "warbringer", searchBox():GetText())
+  check("and keeps focus", M.focus == searchBox())
+  local names = {}
+  for _, r in ipairs(find("Req. level")) do names[#names + 1] = r.text end
+  check("and the list filters", visibleText("Warbringer") and #find("Req. level") <= 3, table.concat(names, " / "))
+  M.type(" g", function() M.tick(0.2) end)
+  check("typing on after a pause", searchBox():GetText() == "warbringer g", searchBox():GetText())
+  local box = searchBox()
+  box:SetText("")
+  box._scripts.OnTextChanged(box, true)     -- as if the text was deleted
+  box._scripts.OnEnterPressed(box)
+  M.tick(0.2)
   clickText("Avoidance")
   clickText("All phases")
   local before = #find("ilvl")
@@ -318,10 +339,16 @@ run("saved, share codes and loading your character", function()
   T.closeAll()
   clickText("New character")
   shot("new")
+  local nameBox
+  local function walk(f) for _, c in ipairs(f._children) do if c._type == "EditBox" and c:IsVisible() then nameBox = c end walk(c) end end
+  walk(T.topSheet())
+  M.click(nameBox)
+  M.type("Moonkin Tank", function() M.tick(0.2) end)
   clickText("Druid")
   clickText("Tauren")
   clickText("Create")
   check("new character", T.cur().cls == "druid" and T.cur().race == "tauren")
+  check("with the name typed", T.cur().name == "Moonkin Tank", T.cur().name)
   check("goes to talents", visibleText("Points left"))
 end)
 

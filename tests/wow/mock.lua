@@ -254,22 +254,43 @@ define("CheckButton", "Button", {
 })
 
 local EditBox = setmetatable({}, { __index = Frame })
-function EditBox:SetText(t) self._text = t if self._scripts.OnTextChanged then self._scripts.OnTextChanged(self, false) end end
+-- focus, highlight and the cursor behave like the game's: SetFocus fires OnEditFocusGained (where
+-- InputBoxTemplate highlights everything), a key typed over a highlight replaces it, hiding drops focus
+function EditBox:SetText(t) self._text = t and tostring(t) or "" self._sel = nil self._cursor = #self._text
+  if self._scripts.OnTextChanged then self._scripts.OnTextChanged(self, false) end end
 function EditBox:GetText() return self._text or "" end
 function EditBox:SetAutoFocus(v) self._autofocus = v end
-function EditBox:SetFocus() M.focus = self end
-function EditBox:ClearFocus() if M.focus == self then M.focus = nil end end
+function EditBox:SetFocus()
+  if M.focus == self then return end
+  local old = M.focus
+  if old then old:ClearFocus() end
+  M.focus = self
+  if self._scripts.OnEditFocusGained then self._scripts.OnEditFocusGained(self) end
+end
+function EditBox:ClearFocus()
+  if M.focus ~= self then return end
+  M.focus = nil
+  if self._scripts.OnEditFocusLost then self._scripts.OnEditFocusLost(self) end
+end
 function EditBox:HasFocus() return M.focus == self end
-function EditBox:HighlightText() end
+function EditBox:HighlightText(a, b)
+  local n = #self:GetText()
+  a, b = a or 0, (b == nil or b == -1) and n or b
+  if a > n then a = n end
+  if b > n then b = n end
+  self._sel = a < b and { a, b } or nil
+end
 function EditBox:SetMultiLine(v) self._multi = v end
 function EditBox:SetMaxLetters(n) self._max = n end
 function EditBox:SetFontObject(f) self._font = f end
 function EditBox:SetTextInsets() end
 function EditBox:SetJustifyH() end
-function EditBox:SetCursorPosition() end
+function EditBox:SetCursorPosition(n) self._cursor = math.max(0, math.min(n or 0, #self:GetText())) end
+function EditBox:GetCursorPosition() return self._cursor or #self:GetText() end
 function EditBox:SetNumeric() end
 function EditBox:Insert(t) self:SetText(self:GetText() .. t) end
 function EditBox:SetTextColor(r, g, b) self._color = { r, g, b } end
+function EditBox:Hide() self:ClearFocus() Region.Hide(self) end
 define("EditBox", "Frame", EditBox)
 
 local ScrollFrame = setmetatable({}, { __index = Frame })
@@ -462,7 +483,12 @@ local TEMPLATES = {
   BackdropTemplate = function(f) f._backdropOk = true end,
   UIPanelButtonTemplate = function(f) f._template = "UIPanelButtonTemplate" f._normalFont = fontObjects.GameFontNormal end,
   UIPanelCloseButton = function(f) f._template = "UIPanelCloseButton" f:SetSize(32, 32) end,
-  InputBoxTemplate = function(f) f._template = "InputBoxTemplate" end,
+  -- InputBoxScriptTemplate's scripts (SecureUIPanelTemplates.xml)
+  InputBoxTemplate = function(f) f._template = "InputBoxTemplate"
+    f._scripts.OnEditFocusGained = function(self) self:HighlightText() end
+    f._scripts.OnEditFocusLost = function(self) self:HighlightText(0, 0) end
+    f._scripts.OnEscapePressed = function(self) self:ClearFocus() end
+  end,
   GameTooltipTemplate = function(f) f._fromTemplate = true end,
   UIPanelScrollFrameTemplate = function(f) f._template = "UIPanelScrollFrameTemplate" end,
 }
@@ -678,6 +704,7 @@ function M.click(frame, button)
   if not frame then error("nothing to click", 2) end
   if frame._enabled == false then return false end
   local s = frame._scripts
+  if frame._type == "EditBox" then frame:SetFocus() end
   if s.PreClick then s.PreClick(frame, button or "LeftButton") end
   if s.OnClick then s.OnClick(frame, button or "LeftButton", false)
   elseif s.OnMouseDown or s.OnMouseUp then
@@ -699,6 +726,22 @@ function M.tick(elapsed)
     if f._scripts.OnUpdate and f:IsVisible() then f._scripts.OnUpdate(f, elapsed or 0.1) end
   end
   M.runTimers(elapsed or 0.1)
+end
+
+--- types into the focused edit box one key at a time, like a player (a key replaces any highlight)
+function M.type(text, between)
+  for c in text:gmatch(".") do
+    local e = M.focus
+    if not e then error("typing with nothing focused", 2) end
+    local t = e:GetText()
+    local a, b
+    if e._sel then a, b = e._sel[1], e._sel[2] else a = e._cursor or #t b = a end
+    e._text = t:sub(1, a) .. c .. t:sub(b + 1)
+    e._sel = nil
+    e._cursor = a + 1
+    if e._scripts.OnTextChanged then e._scripts.OnTextChanged(e, true) end
+    if between then between() end
+  end
 end
 
 function M.frameCount() return #allFrames end
@@ -840,7 +883,7 @@ function M.env(player)
   G.ShowUIPanel = function(f) f:Show() end
   G.HideUIPanel = function(f) f:Hide() end
   G.CloseDropDownMenus = function() end
-  G.C_AddOns = { GetAddOnMetadata = function(_, k) return k == "Version" and "0.2.1" or nil end,
+  G.C_AddOns = { GetAddOnMetadata = function(_, k) return k == "Version" and "0.2.2" or nil end,
     LoadAddOn = function(name)
       if M.loadAddOn then return M.loadAddOn(name) end
       return false, "MISSING"

@@ -13,18 +13,44 @@ local BACKGROUND = {
   Holy = "PaladinHoly", Retribution = "PaladinCombat", Balance = "DruidBalance", ["Feral Combat"] = "DruidFeralCombat", Restoration = "DruidRestoration",
 }
 
+-- the tree's painting, in the four pieces the game's talent frame uses. The pieces go above the backdrop's
+-- centre (BACKGROUND sublevel 0): at the same sublevel the game is free to draw the backdrop over them
+--- the tree's painting: the name the game itself gives it when it will say, else the TBC names
+local CLASS_ID = { warrior = 1, paladin = 2, druid = 11 }
+local clientBg = {}
+local function treeBackground(cls, ti, tree)
+  local key = cls .. ti
+  if clientBg[key] == nil then
+    clientBg[key] = false
+    local ok, _, name, _, _, _, _, _, bg = pcall(C_SpecializationInfo.GetSpecializationInfo, ti + 1, false, false, nil, nil, nil, CLASS_ID[cls])
+    if ok and name == tree.name and type(bg) == "string" and bg ~= "" then clientBg[key] = bg end
+  end
+  if clientBg[key] then return clientBg[key] end
+  local bg = BACKGROUND[tree.name]
+  if type(bg) == "table" then bg = bg[cls] end
+  return bg
+end
+
 K.define("treeart", function()
   local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
   f:SetBackdrop(K.INSET)
-  f.tl = f:CreateTexture(nil, "BACKGROUND")
-  f.tr = f:CreateTexture(nil, "BACKGROUND")
-  f.bl = f:CreateTexture(nil, "BACKGROUND")
-  f.br = f:CreateTexture(nil, "BACKGROUND")
-  f.shade = f:CreateTexture(nil, "BORDER")
-  f.shade:SetAllPoints()
-  f.shade:SetColorTexture(0, 0, 0, 0.35)
+  f:SetBackdropColor(0, 0, 0, 1)
+  f:SetBackdropBorderColor(0.42, 0.33, 0.19, 1)
+  f.tl = f:CreateTexture(nil, "BACKGROUND", nil, 1)
+  f.tr = f:CreateTexture(nil, "BACKGROUND", nil, 1)
+  f.bl = f:CreateTexture(nil, "BACKGROUND", nil, 1)
+  f.br = f:CreateTexture(nil, "BACKGROUND", nil, 1)
+  f.shade = f:CreateTexture(nil, "BACKGROUND", nil, 2)
+  f.shade:SetPoint("TOPLEFT", 3, -3)
+  f.shade:SetPoint("BOTTOMRIGHT", -3, 3)
+  f.shade:SetColorTexture(0, 0, 0, 0.3)
   return f
 end)
+
+-- the game's talent frame shows the pieces at 256 + 44 wide and 256 + 75 tall: the right-hand pieces use
+-- 44 of their 64 pixels and the bottom ones 75 of their 128 (Blizzard_TalentUI.xml's TexCoords)
+local ART_W, ART_H = 256 / 300, 256 / 331
+local RIGHT_U, BOTTOM_V = 0.6875, 0.5859375
 
 --- the talent's text for a tooltip: rank, requirements, this rank and the next
 local function talentLines(t, rank, req)
@@ -78,16 +104,19 @@ function T.talentsView(flow, p)
     local art = K.get(f.owner, "treeart", f.parent)
     art:SetPoint("TOPLEFT", f.parent, "TOPLEFT", f.x, -f.y)
     art:SetSize(f.width, gridH)
-    local bg = BACKGROUND[tree.name]
-    if type(bg) == "table" then bg = bg[p.cls] end
+    local bg = treeBackground(p.cls, ti, tree)
     local base = "Interface\\TalentFrame\\" .. (bg or "WarriorArms")
-    local wA, hA = f.width * 0.8, gridH * 0.66
+    local innerW, innerH = f.width - 6, gridH - 6
+    local wA, hA = floor(innerW * ART_W + 0.5), floor(innerH * ART_H + 0.5)
+    art.tl:ClearAllPoints() art.tr:ClearAllPoints() art.bl:ClearAllPoints() art.br:ClearAllPoints()
     art.tl:SetTexture(base .. "-TopLeft") art.tl:SetPoint("TOPLEFT", 3, -3) art.tl:SetSize(wA, hA)
-    art.tr:SetTexture(base .. "-TopRight") art.tr:SetPoint("TOPLEFT", art.tl, "TOPRIGHT") art.tr:SetSize(f.width - 6 - wA, hA)
-    art.tr:SetTexCoord(0, 1, 0, 1)
-    art.bl:SetTexture(base .. "-BottomLeft") art.bl:SetPoint("TOPLEFT", art.tl, "BOTTOMLEFT") art.bl:SetSize(wA, gridH - 6 - hA)
-    art.br:SetTexture(base .. "-BottomRight") art.br:SetPoint("TOPLEFT", art.tl, "BOTTOMRIGHT") art.br:SetSize(f.width - 6 - wA, gridH - 6 - hA)
-    art.tl:SetTexCoord(0, 1, 0, 1) art.bl:SetTexCoord(0, 1, 0, 1) art.br:SetTexCoord(0, 1, 0, 1)
+    art.tl:SetTexCoord(0, 1, 0, 1)
+    art.tr:SetTexture(base .. "-TopRight") art.tr:SetPoint("TOPLEFT", art.tl, "TOPRIGHT") art.tr:SetSize(innerW - wA, hA)
+    art.tr:SetTexCoord(0, RIGHT_U, 0, 1)
+    art.bl:SetTexture(base .. "-BottomLeft") art.bl:SetPoint("TOPLEFT", art.tl, "BOTTOMLEFT") art.bl:SetSize(wA, innerH - hA)
+    art.bl:SetTexCoord(0, 1, 0, BOTTOM_V)
+    art.br:SetTexture(base .. "-BottomRight") art.br:SetPoint("TOPLEFT", art.tl, "BOTTOMRIGHT") art.br:SetSize(innerW - wA, innerH - hA)
+    art.br:SetTexCoord(0, RIGHT_U, 0, BOTTOM_V)
 
     local colW = f.width / 4
     local function cx(c) return floor(colW * (c + 0.5)) end

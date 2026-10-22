@@ -54,7 +54,7 @@ local REF = L.load(".", function(f) return not f:match("^UI") end, nil, true)
 for tab, tree in ipairs(REF.TALENTS.paladin) do
   local list = {}
   for _, t in ipairs(tree.talents) do list[#list + 1] = { name = t.n, tier = t.r + 1, column = t.c + 1, rank = 0, max = t.max } end
-  player.trees[tab] = { name = tree.name, talents = list }
+  player.trees[tab] = { name = tree.name, talents = list, background = ({ "PaladinHoly", "PaladinProtection", "PaladinCombat" })[tab] }
 end
 for _, t in ipairs(player.trees[2].talents) do
   if t.name == "Redoubt" or t.name == "Toughness" or t.name == "Anticipation" or t.name == "Improved Righteous Fury" then t.rank = math.min(t.max, 5) end
@@ -251,6 +251,11 @@ end)
 run("talents", function()
   clickText("Talents")
   check("talent tree", visibleText("Points left"))
+  local art
+  local function findArt(f) for _, c in ipairs(f._children) do if c._kind == "treeart" and c:IsVisible() then art = c end findArt(c) end end
+  findArt(win)
+  check("tree painting, named by the game", art and art.tl:GetTexture() == "Interface\\TalentFrame\\PaladinProtection-TopLeft", art and art.tl:GetTexture())
+  check("cut like the game's talent frame", art and art.tr._coord[2] == 0.6875 and art.br._coord[4] == 0.5859375 and art.bl._coord[4] == 0.5859375)
   shot("talents")
   local tal
   local function walk(f) for _, c in ipairs(f._children) do if c._kind == "talent" and c:IsVisible() and not tal then tal = c end walk(c) end end
@@ -405,6 +410,8 @@ run("item data that won't load", function()
   for i = #M.errors, errorsBefore + 1, -1 do table.remove(M.errors, i) end
 end)
 
+local clashes = M.layerClashes()
+check("nothing drawn level with a backdrop (the game may draw the backdrop over it)", #clashes == 0, table.concat(clashes, ", "))
 check("no Lua errors", #M.errors == 0, table.concat(M.errors, " | "))
 print(("passed %d"):format(passed))
 print(("errors %d"):format(failed))

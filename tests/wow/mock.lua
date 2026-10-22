@@ -744,6 +744,25 @@ function M.type(text, between)
   end
 end
 
+--- textures that share a draw layer and sublevel with a backdrop's own pieces (BackdropTemplate draws its
+--- centre on BACKGROUND and its edges on BORDER, sublevel 0). The game doesn't define which of two such
+--- textures is drawn on top, so the backdrop can hide them: each clash as "frame kind: layer"
+function M.layerClashes()
+  local out, seen = {}, {}
+  for _, f in ipairs(allFrames) do
+    local b = f._backdrop
+    if b then
+      for _, r in ipairs(f._regions) do
+        if r._type == "Texture" and r._sublevel == 0 and ((r._layer == "BACKGROUND" and b.bgFile) or (r._layer == "BORDER" and b.edgeFile)) then
+          local key = (f._kind or f._name or "frame") .. ": " .. r._layer
+          if not seen[key] then seen[key] = true out[#out + 1] = key end
+        end
+      end
+    end
+  end
+  return out
+end
+
 function M.frameCount() return #allFrames end
 
 --- every method name the stand-in gives a widget type (including what it inherits)
@@ -772,6 +791,7 @@ function M.runTimers(dt)
   for _, fn in ipairs(due) do fn() end
 end
 
+M.CLASS_ID = { warrior = 1, paladin = 2, hunter = 3, rogue = 4, priest = 5, shaman = 7, mage = 8, warlock = 9, druid = 11 }
 function M.env(player)
   player = player or {}
   local G = {}
@@ -854,7 +874,16 @@ function M.env(player)
     local t = player.trees[tab].talents[i]
     return t.name, "", t.tier, t.column, t.rank, t.max
   end
-  G.C_SpecializationInfo = { GetTalentInfo = function(q)
+  G.C_SpecializationInfo = {
+  -- specId, name, description, icon, role, primaryStat, pointsSpent, background (the player's own class only)
+  GetSpecializationInfo = function(i, inspect, pet, target, sex, group, classID)
+    if type(i) ~= "number" then fail("GetSpecializationInfo needs an index") end
+    if classID and classID ~= M.CLASS_ID[player.class] then return 0 end
+    local tree = player.trees and player.trees[i]
+    if not tree then return 0 end
+    return 0, tree.name, "", 136243, nil, nil, 0, tree.background
+  end,
+  GetTalentInfo = function(q)
     local tree = player.trees and player.trees[q.specializationIndex]
     local t = tree and tree.talents[q.talentIndex]
     if not t then return nil end
@@ -883,7 +912,7 @@ function M.env(player)
   G.ShowUIPanel = function(f) f:Show() end
   G.HideUIPanel = function(f) f:Hide() end
   G.CloseDropDownMenus = function() end
-  G.C_AddOns = { GetAddOnMetadata = function(_, k) return k == "Version" and "0.2.2" or nil end,
+  G.C_AddOns = { GetAddOnMetadata = function(_, k) return k == "Version" and "0.2.3" or nil end,
     LoadAddOn = function(name)
       if M.loadAddOn then return M.loadAddOn(name) end
       return false, "MISSING"

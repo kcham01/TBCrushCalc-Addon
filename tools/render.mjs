@@ -24,7 +24,7 @@ function richText(t, base) {
     if (t.startsWith('|T', i)) {
       const end = t.indexOf('|t', i);
       const parts = t.slice(i + 2, end).split(':');
-      const col = parts.length >= 13 ? `rgb(${parts[10]},${parts[11]},${parts[12]})` : '#888';
+      const col = parts.length >= 14 ? `rgb(${parts[11]},${parts[12]},${parts[13]})` : '#888';
       out += `<span style="display:inline-block;width:9px;height:9px;background:${col};vertical-align:-1px"></span>`;
       i = end + 2; continue;
     }

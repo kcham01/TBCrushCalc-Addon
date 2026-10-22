@@ -1,0 +1,69 @@
+ok   game data not loaded at log in
+ok   slash command registered
+ok   minimap button
+ok   window opens
+ok   data loaded once, on opening
+ok   saved variables created
+ok   example character on top
+ok   verdict in the top bar
+ok   paperdoll verdict
+ok   stat panels
+ok   17 + 2 slots on the paperdoll  19
+ok   slot panel opens with the item
+ok   item picker lists items
+ok   search box keeps every key typed  warbringer
+ok   and keeps focus
+ok   and the list filters
+ok   typing on after a pause  warbringer g
+ok   item rows shown  80
+ok   equip preview
+ok   back on the slot panel
+ok   Escape closes the panel
+ok   sockets listed
+ok   gem picker
+ok   gem filter works
+ok   gem goes in
+ok   enchant picker
+ok   enchant on
+ok   too-high enchant explains itself
+ok   and refuses
+ok   talent tree
+ok   tree painting, named by the game  Interface\TalentFrame\PaladinProtection-TopLeft
+ok   cut like the game's talent frame
+ok   talent panel
+ok   consumables
+ok   food list
+ok   food picked
+ok   buff on
+ok   buff improved
+ok   buff off
+ok   buff details
+ok   boss list
+ok   boss picked
+ok   boss on the caps screen
+ok   damage taken
+ok   characters listed
+ok   loaded the character being played
+ok   with its gear, gems and enchant
+ok   and its talents  18
+ok   reissued item found by name  38175
+ok   its enchant read off the tooltip
+ok   and remembered  613347765 613347765
+ok   links written like the client's  item:29011:2999:25896:24033:: item:30882:::::
+ok   manage panel with share code
+ok   new character
+ok   with the name typed  Moonkin Tank
+ok   goes to talents
+ok   redrawing reuses frames  600 frames before, 600 after 100 redraws
+ok   no race atlas in the client: the race sheet  Interface\Glues\CharacterCreate\UI-CharacterCreate-Races
+ok   an atlas when the client has one
+ok   no reason from the game  the game wouldn't load TBCrushCalc_Data and didn't say why
+ok   switched off  TBCrushCalc_Data is switched off in the AddOns list
+ok   out of date  the game calls TBCrushCalc_Data out of date: tick "Load out of date AddOns"
+ok   a data file's error is shown  a data file errored: Interface/AddOns/TBCrushCalc_Data/Gems.lua:5: boom
+ok   and the game's error handler put back
+ok   data loaded first still works
+ok   nothing drawn level with a backdrop (the game may draw the backdrop over it)
+ok   no Lua errors
+passed 67
+errors 0

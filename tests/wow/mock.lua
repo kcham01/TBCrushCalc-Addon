@@ -325,9 +325,29 @@ function GameTooltipM:AddLine(t, r, g, b) table.insert(self._lines, { t, r or 1,
 function GameTooltipM:AddDoubleLine(a, b) table.insert(self._lines, { a .. "    " .. b, 1, 1, 1 }) end
 function GameTooltipM:ClearLines() self._lines = {} end
 function GameTooltipM:SetSpellByID(id) self._lines = { { "spell " .. id, 1, 1, 1 } } end
-function GameTooltipM:NumLines() return #self._lines end
+-- a named tooltip made from GameTooltipTemplate has its lines as <name>TextLeft1, 2, ... like the game's
+function GameTooltipM:NumLines()
+  if self._name and self._fromTemplate then
+    self._left = self._left or {}
+    for i, l in ipairs(self._lines) do
+      local fs = self._left[i]
+      if not fs then
+        fs = M.newRegion("FontString", self, self._name .. "TextLeft" .. i)
+        fs:Hide()
+        self._left[i] = fs
+      end
+      fs:SetText(l[1])
+      fs:SetTextColor(l[2], l[3], l[4])
+    end
+    for i = #self._lines + 1, #self._left do self._left[i]:SetText("") end
+  end
+  return #self._lines
+end
 function GameTooltipM:SetMinimumWidth(w) self._minW = w end
-function GameTooltipM:SetInventoryItem() self._lines = { { "inventory", 1, 1, 1 } } return true end
+function GameTooltipM:SetInventoryItem(unit, slot)
+  self._lines = M.inventoryLines and M.inventoryLines(unit, slot) or { { "inventory", 1, 1, 1 } }
+  return true
+end
 function GameTooltipM:Show()
   local w = self._minW or 0
   for _, l in ipairs(self._lines or {}) do w = math.max(w, #plain(l[1]) * 12 * 0.55 + 20) end
@@ -443,7 +463,7 @@ local TEMPLATES = {
   UIPanelButtonTemplate = function(f) f._template = "UIPanelButtonTemplate" f._normalFont = fontObjects.GameFontNormal end,
   UIPanelCloseButton = function(f) f._template = "UIPanelCloseButton" f:SetSize(32, 32) end,
   InputBoxTemplate = function(f) f._template = "InputBoxTemplate" end,
-  GameTooltipTemplate = function(f) end,
+  GameTooltipTemplate = function(f) f._fromTemplate = true end,
   UIPanelScrollFrameTemplate = function(f) f._template = "UIPanelScrollFrameTemplate" end,
 }
 
@@ -798,8 +818,14 @@ function M.env(player)
     return { name = t.name, icon = 136243, tier = t.tier, column = t.column, rank = t.rank, maxRank = t.max, talentID = 1 }
   end }
   G.GetItemInfo = function(id) return nil end
-  G.geterrorhandler = function() return function(e) table.insert(M.errors, tostring(e)) end end
-  G.GetRaceAtlas = function(race, gender, hi) return (hi and "raceicon128-%s-%s" or "raceicon-%s-%s"):format(race, gender) end
+  local defaultHandler = function(e) table.insert(M.errors, tostring(e)) end
+  local errorHandler = defaultHandler
+  G.geterrorhandler = function() return errorHandler end
+  G.seterrorhandler = function(f) if type(f) ~= "function" then fail("seterrorhandler needs a function") end errorHandler = f end
+  -- the Anniversary client has no raceicon atlases (C_Texture.GetAtlasInfo("raceicon128-human-male") is nil in game)
+  G.C_Texture = { GetAtlasInfo = function(a) if type(a) ~= "string" then fail("GetAtlasInfo needs a name") end return M.atlases and M.atlases[a] or nil end }
+  G.GetFileIDFromPath = function(path) if type(path) ~= "string" then fail("GetFileIDFromPath needs a path") end
+    return path:lower():find("^interface\\") and not (M.missingFiles and M.missingFiles[path]) and 1000 + #path or nil end
   G.CLASS_ICON_TCOORDS = { WARRIOR = { 0, 0.25, 0, 0.25 }, DRUID = { 0.7421875, 0.98828125, 0, 0.25 }, PALADIN = { 0, 0.25, 0.5, 0.75 },
     MAGE = { 0.25, 0.49609375, 0, 0.25 }, ROGUE = { 0.49609375, 0.7421875, 0, 0.25 }, HUNTER = { 0, 0.25, 0.25, 0.5 }, SHAMAN = { 0.25, 0.49609375, 0.25, 0.5 },
     PRIEST = { 0.49609375, 0.7421875, 0.25, 0.5 }, WARLOCK = { 0.7421875, 0.98828125, 0.25, 0.5 } }
@@ -814,10 +840,15 @@ function M.env(player)
   G.ShowUIPanel = function(f) f:Show() end
   G.HideUIPanel = function(f) f:Hide() end
   G.CloseDropDownMenus = function() end
-  G.C_AddOns = { GetAddOnMetadata = function(_, k) return k == "Version" and "0.2.0" or nil end,
+  G.C_AddOns = { GetAddOnMetadata = function(_, k) return k == "Version" and "0.2.1" or nil end,
     LoadAddOn = function(name)
       if M.loadAddOn then return M.loadAddOn(name) end
       return false, "MISSING"
+    end,
+    GetAddOnInfo = function(name)
+      local loadable, reason = true, nil
+      if M.addOnInfo then loadable, reason = M.addOnInfo(name) end
+      return name, name, "", loadable, reason or "", "INSECURE", false
     end }
   G.ITEM_QUALITY_COLORS = {}
   -- globals that addons may check for; reading them is fine even though they are nil here

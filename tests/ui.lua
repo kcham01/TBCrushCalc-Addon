@@ -59,9 +59,20 @@ end
 for _, t in ipairs(player.trees[2].talents) do
   if t.name == "Redoubt" or t.name == "Toughness" or t.name == "Anticipation" or t.name == "Improved Righteous Fury" then t.rank = math.min(t.max, 5) end
 end
--- gear: Warbringer Greathelm with two gems and Glyph of the Defender, Bastion of Light
-player.links[1] = "|cffa335ee|Hitem:29011:2999:25896:24033:0:0:0:0:70|h[Warbringer Greathelm]|h|r"
-player.links[17] = "|cffa335ee|Hitem:30882:0:0:0:0:0:0:0:70|h[Bastion of Light]|h|r"
+-- gear, with links written the way the Anniversary client writes them (empty fields blank, from /dump
+-- GetInventoryItemLink in game): Warbringer Greathelm with two gems and Glyph of the Defender, Bastion of
+-- Light, and The Horseman's Blade under the new id the Anniversary realms gave it, with Battlemaster (an
+-- enchant the data has no game id for, so it's read off the tooltip)
+player.links[1] = "|cffa335ee|Hitem:29011:2999:25896:24033:::::70::::::::::|h[Warbringer Greathelm]|h|r"
+player.links[17] = "|cffa335ee|Hitem:30882::::::::70::::::::::|h[Bastion of Light]|h|r"
+player.links[16] = "|cffa335ee|Hitem:281923:2675:::::::70::::::::::|h[The Horseman's Blade]|h|r"
+M.inventoryLines = function(_, slot)
+  if slot == 16 then
+    return { { "The Horseman's Blade", 0.64, 0.21, 0.93 }, { "Binds when picked up", 1, 1, 1 }, { "Battlemaster", 0, 1, 0 },
+      { "+16 Stamina", 1, 1, 1 }, { "Equip: Increases attack power by 46.", 0, 1, 0 } }
+  end
+  return { { "inventory", 1, 1, 1 } }
+end
 
 -- json for the renderer
 local function json(v)
@@ -292,6 +303,11 @@ run("saved, share codes and loading your character", function()
   check("with its gear, gems and enchant", me.gear.head and me.gear.head.id == 29011 and T.ENCHANT_BY_ID[me.gear.head.ench].n == "Glyph of the Defender"
     and me.gear.head.gems and me.gear.head.gems[1] == 25896)
   check("and its talents", T.TR.spent(me.talents) > 10, tostring(T.TR.spent(me.talents)))
+  check("reissued item found by name", me.gear.mainhand and me.gear.mainhand.id == 38175, me.gear.mainhand and tostring(me.gear.mainhand.id))
+  check("its enchant read off the tooltip", me.gear.mainhand and me.gear.mainhand.ench and T.ENCHANT_BY_ID[me.gear.mainhand.ench].n == "Enchant Weapon - Battlemaster")
+  check("and remembered", T.db.ui.effMap and T.db.ui.effMap[2675] == me.gear.mainhand.ench, tostring(T.db.ui.effMap and T.db.ui.effMap[2675]) .. " " .. tostring(me.gear.mainhand.ench))
+  check("links written like the client's", T.itemString(me.gear.head) == "item:29011:2999:25896:24033::" and T.itemString(me.gear.offhand) == "item:30882:::::",
+    T.itemString(me.gear.head) .. " " .. T.itemString(me.gear.offhand))
   shot("loaded")
   clickText("Saved")
   local more = find("...")
@@ -316,6 +332,50 @@ run("no leaks", function()
   end
   local after = M.frameCount()
   check("redrawing reuses frames", after - before < 5, ("%d frames before, %d after 100 redraws"):format(before, after))
+end)
+
+run("race portraits", function()
+  local f = M.CreateFrame("Frame", nil, G.UIParent)
+  local tex = f:CreateTexture()
+  T.raceIcon(tex, "undead", "warrior")
+  check("no race atlas in the client: the race sheet", tex:GetTexture() == "Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Races"
+    and tex._coord[1] == 0.125 and tex._coord[3] == 0.25, tostring(tex:GetTexture()))
+  M.atlases = { ["raceicon128-tauren-male"] = { width = 128, height = 128 } }
+  T.raceIcon(tex, "tauren", "druid")
+  check("an atlas when the client has one", tex:GetAtlas() == "raceicon128-tauren-male")
+  M.atlases = nil
+end)
+
+run("item data that won't load", function()
+  local errorsBefore = #M.errors
+  local keep = M.loadAddOn
+  local function fresh()
+    local G2 = M.env({ name = "Alt", class = "warrior", race = "orc", links = {}, trees = {} })
+    return L.load(".", nil, G2), G2
+  end
+  local T2 = fresh()
+  M.loadAddOn = function() return nil, nil end
+  check("no reason from the game", not T2.loadData() and T2.dataError:find("didn't say why"), T2.dataError)
+  T2 = fresh()
+  M.loadAddOn = function() return false, "DISABLED" end
+  check("switched off", not T2.loadData() and T2.dataError:find("switched off"), T2.dataError)
+  T2 = fresh()
+  M.loadAddOn = function() return false, "INTERFACE_VERSION" end
+  check("out of date", not T2.loadData() and T2.dataError:find("out of date"), T2.dataError)
+  local G2
+  T2, G2 = fresh()
+  M.loadAddOn = function() G2.geterrorhandler()("Interface/AddOns/TBCrushCalc_Data/Gems.lua:5: boom") return true end
+  check("a data file's error is shown", not T2.loadData() and T2.dataError:find("Gems.lua:5: boom", 1, true), T2.dataError)
+  check("and the game's error handler put back", G2.geterrorhandler() ~= nil and #M.errors == errorsBefore + 1)
+  -- the game ran TBCrushCalc_Data before TBCrushCalc: the tables are picked up, nothing else to load
+  local G3 = M.env({ name = "Alt", class = "warrior", race = "orc", links = {}, trees = {} })
+  L.loadData(".", G3)
+  local calls = 0
+  M.loadAddOn = function() calls = calls + 1 return false, "MISSING" end
+  local T3 = L.load(".", nil, G3)
+  check("data loaded first still works", T3.loadData() and calls == 0 and #T3.ITEMS > 14000 and T3.ITEM_BY_ID[29011] ~= nil, T3.dataError)
+  M.loadAddOn = keep
+  for i = #M.errors, errorsBefore + 1, -1 do table.remove(M.errors, i) end
 end)
 
 check("no Lua errors", #M.errors == 0, table.concat(M.errors, " | "))

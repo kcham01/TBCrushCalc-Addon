@@ -92,7 +92,7 @@ end
 local builtins = {}
 for k in pairs(_G) do builtins[k] = true end
 for _, k in ipairs({ "strsplit", "wipe", "tinsert", "tremove", "format", "strtrim", "floor", "ceil", "max", "min", "abs", "sqrt", "random", "strlower",
-  "strupper", "strlen", "strsub", "strfind", "strmatch", "gsub", "strrep", "strbyte", "strchar", "sort", "tconcat", "date", "time", "bit", "debugprofilestop", "geterrorhandler",
+  "strupper", "strlen", "strsub", "strfind", "strmatch", "gsub", "strrep", "strbyte", "strchar", "sort", "tconcat", "date", "time", "bit", "debugprofilestop", "geterrorhandler", "seterrorhandler",
   -- set up by the chat frame code at start-up
   "SlashCmdList" }) do builtins[k] = true end
 

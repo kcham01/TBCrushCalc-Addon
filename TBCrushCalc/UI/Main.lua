@@ -30,7 +30,7 @@ local function save()
   db.profiles = S.list
   db.current = S.curId
   db.ui = { tab = S.tab, capMode = S.capMode, statL = S.statL, statR = S.statR, phase = S.phase, armorOnly = S.armorOnly, minLevel = S.minLevel,
-    point = db.ui and db.ui.point, minimap = db.ui and db.ui.minimap, effMap = db.ui and db.ui.effMap }
+    point = db.ui and db.ui.point, minimap = db.ui and db.ui.minimap, hideMinimap = db.ui and db.ui.hideMinimap, effMap = db.ui and db.ui.effMap }
 end
 T.save = save
 
@@ -78,10 +78,40 @@ local function classIcon(tex, cls)
 end
 T.classIcon = classIcon
 
-local ATLAS_RACE = { human = "human", dwarf = "dwarf", nightelf = "nightelf", gnome = "gnome", draenei = "draenei", orc = "orc", undead = "undead", tauren = "tauren", troll = "troll", bloodelf = "bloodelf" }
-function T.raceIcon(tex, race)
-  tex:SetTexCoord(0, 1, 0, 1)
-  tex:SetAtlas(GetRaceAtlas(ATLAS_RACE[race] or "human", "male", true))
+-- race portraits. The retail-style atlases (raceicon128-human-male) aren't in the Anniversary client, so
+-- use one only if the client has it, else the character-creation race sheet the 2.5 client ships
+-- (coordinates from its own CharacterCreate.lua), else the class icon
+local RACE_FILE = { human = "HUMAN", dwarf = "DWARF", nightelf = "NIGHTELF", gnome = "GNOME", draenei = "DRAENEI",
+  orc = "ORC", undead = "SCOURGE", tauren = "TAUREN", troll = "TROLL", bloodelf = "BLOODELF" }
+local RACE_SHEET = "Interface\\Glues\\CharacterCreate\\UI-CharacterCreate-Races"
+local RACE_TCOORDS = {
+  HUMAN_MALE = { 0, 0.125, 0, 0.25 }, DWARF_MALE = { 0.125, 0.25, 0, 0.25 }, GNOME_MALE = { 0.25, 0.375, 0, 0.25 },
+  NIGHTELF_MALE = { 0.375, 0.5, 0, 0.25 }, DRAENEI_MALE = { 0.5, 0.625, 0, 0.25 },
+  TAUREN_MALE = { 0, 0.125, 0.25, 0.5 }, SCOURGE_MALE = { 0.125, 0.25, 0.25, 0.5 }, TROLL_MALE = { 0.25, 0.375, 0.25, 0.5 },
+  ORC_MALE = { 0.375, 0.5, 0.25, 0.5 }, BLOODELF_MALE = { 0.5, 0.625, 0.25, 0.5 },
+  HUMAN_FEMALE = { 0, 0.125, 0.5, 0.75 }, DWARF_FEMALE = { 0.125, 0.25, 0.5, 0.75 }, GNOME_FEMALE = { 0.25, 0.375, 0.5, 0.75 },
+  NIGHTELF_FEMALE = { 0.375, 0.5, 0.5, 0.75 }, DRAENEI_FEMALE = { 0.5, 0.625, 0.5, 0.75 },
+  TAUREN_FEMALE = { 0, 0.125, 0.75, 1 }, SCOURGE_FEMALE = { 0.125, 0.25, 0.75, 1 }, TROLL_FEMALE = { 0.25, 0.375, 0.75, 1 },
+  ORC_FEMALE = { 0.375, 0.5, 0.75, 1 }, BLOODELF_FEMALE = { 0.5, 0.625, 0.75, 1 },
+}
+local ATLAS_RACE = { undead = "scourge" }
+local sheetOk
+function T.raceIcon(tex, race, cls)
+  race = RACE_FILE[race] and race or "human"
+  local a = "raceicon128-" .. (ATLAS_RACE[race] or race) .. "-male"
+  if C_Texture.GetAtlasInfo(a) then
+    tex:SetTexCoord(0, 1, 0, 1)
+    tex:SetAtlas(a)
+    return
+  end
+  if sheetOk == nil then sheetOk = GetFileIDFromPath(RACE_SHEET) ~= nil end
+  if sheetOk or not cls then
+    tex:SetTexture(RACE_SHEET)
+    local c = RACE_TCOORDS[RACE_FILE[race] .. "_MALE"]
+    tex:SetTexCoord(c[1], c[2], c[3], c[4])
+  else
+    classIcon(tex, cls)
+  end
 end
 
 local function build()
@@ -470,7 +500,7 @@ local started = false
 function T.start()
   if started then return true end
   if not T.loadData() then
-    print(("|cffffd100TBCrushCalc|r: couldn't load TBCrushCalc_Data (%s). Put both the TBCrushCalc and TBCrushCalc_Data folders in Interface\\AddOns and enable them."):format(tostring(T.dataError)))
+    print(("|cffffd100TBCrushCalc|r: couldn't load its item data: %s. Both the TBCrushCalc and TBCrushCalc_Data folders need to be in Interface\\AddOns and ticked in the AddOns list."):format(tostring(T.dataError)))
     return false
   end
   db = T.Store.load(TBCrushCalcDB)

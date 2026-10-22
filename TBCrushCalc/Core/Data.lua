@@ -91,21 +91,68 @@ function T.enchantUrl(e)
   return T.wowheadSearchUrl(e.n)
 end
 
---- the game's item link text for a piece (gems are item ids in the 2.5 client's links)
+--- the game's item link text for a piece, written the way the client writes its own links:
+--- item:id:enchant:gem1:gem2:gem3:gem4, gems as item ids, empty fields left blank
 function T.itemString(piece)
   if not piece then return nil end
   local e = piece.ench and T.ENCHANT_BY_ID[piece.ench]
   local g = piece.gems or {}
-  return ("item:%d:%d:%d:%d:%d:%d"):format(piece.id, e and e.eff or 0, g[1] or 0, g[2] or 0, g[3] or 0, g[4] or 0)
+  local function f(v) return (v and v > 0) and tostring(v) or "" end
+  return ("item:%d:%s:%s:%s:%s:%s"):format(piece.id, f(e and e.eff), f(g[1]), f(g[2]), f(g[3]), f(g[4]))
 end
 
---- loads TBCrushCalc_Data (once) and indexes it; returns true when the data is there
+local DATA = "TBCrushCalc_Data"
+local REASONS = {
+  MISSING = "the TBCrushCalc_Data folder isn't in Interface\\AddOns",
+  DISABLED = "TBCrushCalc_Data is switched off in the AddOns list",
+  INTERFACE_VERSION = "the game calls TBCrushCalc_Data out of date: tick \"Load out of date AddOns\"",
+  DEP_MISSING = "TBCrushCalc_Data can't find TBCrushCalc",
+  DEP_DISABLED = "TBCrushCalc_Data needs TBCrushCalc switched on",
+  CORRUPT = "the TBCrushCalc_Data files are damaged: download the zip again",
+  BANNED = "the game blocked TBCrushCalc_Data",
+  INSECURE = "the game blocked TBCrushCalc_Data",
+}
+
+--- if the data's tables landed somewhere other than this namespace, bring them over
+local function adopt()
+  local ns = TBCrushCalcNS
+  if type(ns) == "table" and ns ~= T then
+    for k, v in pairs(ns) do if T[k] == nil or (k == "ITEMS" and #T.ITEMS == 0) then T[k] = v end end
+    TBCrushCalcNS = T
+  end
+end
+
+--- loads TBCrushCalc_Data (once) and indexes it; returns true when the data is there. When it can't,
+--- T.dataError says why in words: the game's own reason, or the first Lua error from the data files
 function T.loadData()
   if T.dataReady then return true end
+  adopt()
   if not T.GEMS then
-    local loaded, why = C_AddOns.LoadAddOn("TBCrushCalc_Data")
-    if not loaded or not T.GEMS then
-      T.dataError = why or "missing"
+    local firstError
+    local handler = geterrorhandler()
+    seterrorhandler(function(msg, ...)
+      firstError = firstError or tostring(msg)
+      return handler(msg, ...)
+    end)
+    local ok, loaded, why = pcall(C_AddOns.LoadAddOn, DATA)
+    seterrorhandler(handler)
+    if not ok then firstError = firstError or tostring(loaded) loaded = false end
+    adopt()
+    if not T.GEMS or not T.STAT_NAMES or #T.ITEMS == 0 then
+      if not why then
+        local _, _, _, loadable, reason = C_AddOns.GetAddOnInfo(DATA)
+        if not loadable and reason and reason ~= "" then why = reason end
+      end
+      if firstError then
+        T.dataError = "a data file errored: " .. firstError
+      elseif why then
+        T.dataError = REASONS[why] or ("the game said " .. tostring(why))
+      elseif loaded then
+        T.dataError = "TBCrushCalc_Data loaded but its tables are empty (gems " .. tostring(T.GEMS ~= nil) ..
+          ", items " .. #T.ITEMS .. ")"
+      else
+        T.dataError = "the game wouldn't load TBCrushCalc_Data and didn't say why"
+      end
       return false
     end
   end

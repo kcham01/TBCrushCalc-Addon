@@ -35,7 +35,7 @@ function T.savedView(flow, p0)
     for _, p in ipairs(list) do
       local v = E.verdict(p, T.mainMode(p))
       local b = K.get(f.owner, "prof", f.parent)
-      T.raceIcon(b.race, p.race)
+      T.raceIcon(b.race, p.race, p.cls)
       T.classIcon(b.cls, p.cls)
       b.n:SetText(p.name)
       b.n:SetTextColor(U.hex(T.classOf(p).color))

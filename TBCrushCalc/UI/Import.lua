@@ -45,6 +45,31 @@ local function sameStats(a, b)
   return true
 end
 
+--- an item the data doesn't know by id: the Anniversary realms reissued some items under new ids
+--- (The Horseman's Blade is 281923 there), so find it by the name in the link, in the same slot
+local BY_NAME
+local function itemByName(link, slotId)
+  local name = link:match("|h%[(.-)%]|h")
+  if not name then return nil end
+  if not BY_NAME then
+    BY_NAME = {}
+    for _, it in ipairs(T.ITEMS) do
+      local k = it.n:lower()
+      BY_NAME[k] = BY_NAME[k] or {}
+      table.insert(BY_NAME[k], it)
+    end
+  end
+  for _, it in ipairs(BY_NAME[name:lower()] or {}) do
+    if T.slotAccepts(slotId, it) then return it end
+  end
+  return nil
+end
+
+--- "Enchant Weapon - Mongoose" -> "mongoose", the way the item's tooltip names it
+local function shortName(e)
+  return (e.n:gsub("^Enchant [^%-]+ %- ", "")):lower()
+end
+
 local scan
 --- the enchant on an equipped item: by the game's enchant id when the data knows it, else by reading the
 --- green enchant line off the item's tooltip and matching its stats (remembered for next time)
@@ -70,17 +95,22 @@ local function enchantFor(slotId, eff, it)
     if text then
       local r, g, b = fs:GetTextColor()
       if g > 0.9 and r < 0.2 and b < 0.2 and not text:find("^Equip:") and not text:find("^Use:") and not text:find("^Chance on hit:") and not text:find("^Socket Bonus") and not text:find("^%(") then
-        local st = parseStats(text)
+        -- proc enchants show their name ("Mongoose"), stat enchants their stats ("+15 Defense Rating")
+        local hit
+        local name = text:lower()
+        for _, e in ipairs(candidates) do
+          if shortName(e) == name then hit = e break end
+        end
+        local st = not hit and parseStats(text)
         if st then
-          local hit
           for _, e in ipairs(candidates) do
             if sameStats(st, e.st) then
               if hit then hit = nil break end      -- more than one enchant with these stats: can't tell
               hit = e
             end
           end
-          if hit then map[eff] = hit.k return hit.k end
         end
+        if hit then map[eff] = hit.k return hit.k end
       end
     end
   end
@@ -106,9 +136,9 @@ function T.loadMyCharacter()
     if link then
       local id, eff, g1, g2, g3, g4 = link:match("item:(%d+):?(%-?%d*):?(%-?%d*):?(%-?%d*):?(%-?%d*):?(%-?%d*)")
       id = tonumber(id)
-      local it = id and T.ITEM_BY_ID[id]
+      local it = id and T.ITEM_BY_ID[id] or itemByName(link, s.id)
       if it then
-        local piece = { id = id }
+        local piece = { id = it.id }
         local gems, any = {}, false
         for i, g in ipairs({ g1, g2, g3, g4 }) do
           local gid = tonumber(g) or 0

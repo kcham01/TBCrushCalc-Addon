@@ -118,7 +118,7 @@ function T.characterView(flow, p)
     else
       local portrait = K.get(f.owner, "portrait", mid)
       portrait:SetPoint("TOP", mid, "TOP", 0, -(modelTop + math.max(0, (modelBottom - modelTop - 68) / 2)))
-      T.raceIcon(portrait.tex, p.race)
+      T.raceIcon(portrait.tex, p.race, p.cls)
     end
     -- weapons along the bottom
     local by = colH + 8

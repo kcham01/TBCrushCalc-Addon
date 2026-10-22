@@ -2,7 +2,7 @@
 ## Title: |cffffd100TBCrushCalc|r Data
 ## Notes: Every TBC item, gem, enchant, consumable and raid boss for TBCrushCalc. Loaded when you open TBCrushCalc.
 ## Author: Jamesthefishguy
-## Version: 0.2.0
+## Version: 0.2.1
 ## LoadOnDemand: 1
 ## Dependencies: TBCrushCalc
 

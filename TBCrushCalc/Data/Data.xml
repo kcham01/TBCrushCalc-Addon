@@ -1,0 +1,21 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+  <Script file="Items01.lua"/>
+  <Script file="Items02.lua"/>
+  <Script file="Items03.lua"/>
+  <Script file="Items04.lua"/>
+  <Script file="Items05.lua"/>
+  <Script file="Items06.lua"/>
+  <Script file="Items07.lua"/>
+  <Script file="Items08.lua"/>
+  <Script file="Items09.lua"/>
+  <Script file="Items10.lua"/>
+  <Script file="Items11.lua"/>
+  <Script file="Items12.lua"/>
+  <Script file="Sets.lua"/>
+  <Script file="Gems.lua"/>
+  <Script file="Enchants.lua"/>
+  <Script file="Consumables.lua"/>
+  <Script file="Bosses.lua"/>
+  <Script file="Talents.lua"/>
+  <Script file="Static.lua"/>
+</Ui>

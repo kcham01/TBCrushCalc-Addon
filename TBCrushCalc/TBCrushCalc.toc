@@ -1,0 +1,17 @@
+## Interface: 20506
+## Title: |cffffd100TBCrushCalc|r
+## Notes: Tank gear planner and crush / crit cap calculator for warriors, paladins and druids. Same as the TBCrushCalc app.
+## Author: Jamesthefishguy
+## Version: 0.2.0
+## SavedVariables: TBCrushCalcDB
+## IconTexture: Interface\Icons\INV_Shield_06
+## Category: Combat
+
+Init.lua
+Data\Data.xml
+Core\Util.lua
+Core\Data.lua
+Core\Engine.lua
+Core\Sim.lua
+Core\TalentRules.lua
+Core\Store.lua

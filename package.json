@@ -1,0 +1,14 @@
+{
+  "name": "tbcrushcalc-addon",
+  "version": "0.2.0",
+  "private": true,
+  "description": "TBCrushCalc as a World of Warcraft TBC Anniversary addon",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "data": "node tools/export_data.mjs ../bigcrazyworld",
+    "test": "lua5.1 tests/run.lua"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0"
+  }
+}

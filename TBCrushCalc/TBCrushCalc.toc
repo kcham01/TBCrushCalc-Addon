@@ -4,14 +4,24 @@
 ## Author: Jamesthefishguy
 ## Version: 0.2.0
 ## SavedVariables: TBCrushCalcDB
+## OptionalDeps: TBCrushCalc_Data
 ## IconTexture: Interface\Icons\INV_Shield_06
 ## Category: Combat
 
 Init.lua
-Data\Data.xml
 Core\Util.lua
 Core\Data.lua
 Core\Engine.lua
 Core\Sim.lua
 Core\TalentRules.lua
 Core\Store.lua
+UI\Kit.lua
+UI\Text.lua
+UI\Main.lua
+UI\Picker.lua
+UI\Character.lua
+UI\Talents.lua
+UI\Buffs.lua
+UI\Caps.lua
+UI\Saved.lua
+UI\Import.lua

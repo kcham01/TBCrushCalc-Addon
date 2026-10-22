@@ -2,9 +2,10 @@
 -- (each file gets the addon name and the shared namespace table as `...`).
 local M = {}
 
-local function readToc(root)
+local function readToc(root, addon)
+  addon = addon or "TBCrushCalc"
   local files = {}
-  for line in io.lines(root .. "/TBCrushCalc/TBCrushCalc.toc") do
+  for line in io.lines(root .. "/" .. addon .. "/" .. addon .. ".toc") do
     line = line:gsub("\r", "")
     if line ~= "" and not line:match("^#") then files[#files + 1] = (line:gsub("\\", "/")) end
   end
@@ -12,7 +13,7 @@ local function readToc(root)
 end
 
 local function expand(root, f)
-  if f:match("%.xml$") then
+  if false and f:match("%.xml$") then
     local dir = f:match("^(.*)/") or ""
     local out = {}
     for line in io.lines(root .. "/TBCrushCalc/" .. f) do
@@ -24,20 +25,35 @@ local function expand(root, f)
   return { f }
 end
 
---- loads every file whose path passes `want` (all of them when nil); returns the namespace
-function M.load(root, want, env)
-  local T = {}
-  for _, f in ipairs(readToc(root)) do
+local function loadAddon(root, addon, T, want, env)
+  for _, f in ipairs(readToc(root, addon)) do
     for _, file in ipairs(expand(root, f)) do
       if not want or want(file) then
-        local chunk, err = loadfile(root .. "/TBCrushCalc/" .. file)
+        local chunk, err = loadfile(root .. "/" .. addon .. "/" .. file)
         if not chunk then error(err) end
         if env then setfenv(chunk, env) end
-        chunk("TBCrushCalc", T)
+        chunk(addon, T)
       end
     end
   end
+end
+
+--- loads the addon (every file whose path passes `want`, all of them when nil); returns its namespace.
+--- With `withData`, also loads TBCrushCalc_Data and indexes it, as opening the window does in game.
+function M.load(root, want, env, withData)
+  local T = {}
+  loadAddon(root, "TBCrushCalc", T, want, env)
+  if withData then
+    M.loadData(root, env)
+    T.indexData()
+    T.dataReady = true
+  end
   return T
+end
+
+--- loads TBCrushCalc_Data (its files find the namespace through the TBCrushCalcNS global)
+function M.loadData(root, env)
+  loadAddon(root, "TBCrushCalc_Data", {}, nil, env)
 end
 
 function M.readFile(path)

@@ -99,4 +99,17 @@ function T.itemString(piece)
   return ("item:%d:%d:%d:%d:%d:%d"):format(piece.id, e and e.eff or 0, g[1] or 0, g[2] or 0, g[3] or 0, g[4] or 0)
 end
 
-T.indexData()
+--- loads TBCrushCalc_Data (once) and indexes it; returns true when the data is there
+function T.loadData()
+  if T.dataReady then return true end
+  if not T.GEMS then
+    local loaded, why = C_AddOns.LoadAddOn("TBCrushCalc_Data")
+    if not loaded or not T.GEMS then
+      T.dataError = why or "missing"
+      return false
+    end
+  end
+  T.indexData()
+  T.dataReady = true
+  return true
+end

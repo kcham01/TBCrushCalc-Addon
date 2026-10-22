@@ -10,7 +10,8 @@ package.path = "./tests/?.lua;" .. package.path
 pcall(require, "bit")
 bit = bit or (package.loaded.bit)
 local L = require("load")
-local T = L.load(".")
+-- the engine needs no game API: load it straight into this Lua, with the data
+local T = L.load(".", function(f) return not f:match("^UI") end, nil, true)
 local U, E, S, TR = T.U, T.E, T.Store, T.TR
 
 local failed, passed = 0, 0

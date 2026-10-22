@@ -1,0 +1,27 @@
+## Interface: 20506
+## Title: |cffffd100TBCrushCalc|r Data
+## Notes: Every TBC item, gem, enchant, consumable and raid boss for TBCrushCalc. Loaded when you open TBCrushCalc.
+## Author: Jamesthefishguy
+## Version: 0.2.0
+## LoadOnDemand: 1
+## Dependencies: TBCrushCalc
+
+Items01.lua
+Items02.lua
+Items03.lua
+Items04.lua
+Items05.lua
+Items06.lua
+Items07.lua
+Items08.lua
+Items09.lua
+Items10.lua
+Items11.lua
+Items12.lua
+Sets.lua
+Gems.lua
+Enchants.lua
+Consumables.lua
+Bosses.lua
+Talents.lua
+Static.lua
